@@ -9,8 +9,6 @@
 import random
 import time
 
-
-
 # assemble the deck
 def create_decks(number_of_decks):
     deck = []
@@ -28,9 +26,10 @@ def create_decks(number_of_decks):
                 deck.append(built_card)
     return deck
 
-
-# shuffle the deck and index
 def shuffle_deck(deck): 
+    """
+    Given a deck list, return the deck shuffled, and provide the card with its index
+    """
     shuffled_deck = random.sample(deck,len(deck))
     shuffled_indexed_deck = []
     for card in shuffled_deck:
@@ -76,21 +75,49 @@ def place_bet(wallet_value):
 def calculate_hand_value(hand):
     # handle for hace
     if 11 in hand and sum(hand) > 21:
-         hand = hand.substitute(11,1)
+         hand.remove(11)
+         hand.append(1)
          hand_value = sum(hand)
     else: 
         hand_value = sum(hand)
     return hand_value
 
-# compare the two hands together
-def calculate_winner(house_hand,player_hand):
-    if house_hand > player_hand:
-        status = "House wins"
-    elif house_hand < player_hand: 
-        status = "Player wins"
+# COMPARE DEALER VALUE TO PLAYER VALUE
+def calculate_winner(dealer_points,player_points):
+    dealer_points = calculate_hand_value(dealer_points)
+    player_points = calculate_hand_value(player_points)
+    if player_bust or dealer_points > player_points:
+        print("-------------------------------------------")
+        print(f"DEALER WINS :( {dealer_points} - {player_points}")
+        print("-------------------------------------------")
+        return "LOSS"
+    elif dealer_bust or dealer_points < player_points:
+        print("-------------------------------------------")
+        print(f"{player} WINS! {player_points} - {dealer_points}")
+        print("-------------------------------------------")
+        return "WIN"
     else:
-        status = "Push"
-    return status
+        print("-------------------------------------------")
+        print(f"PUSH {player_points} - {dealer_points} - you get your money back *rolling my eyes* ")
+        print("-------------------------------------------")
+        return "PUSH"
+        
+def update_wallet_value(result,player_wallet):
+    # player_wins
+    
+    if result == 'WIN':
+        new_wallet_value = player_wallet[0] + bet_amount
+        player_wallet.pop(0)
+        player_wallet.append(new_wallet_value)
+        return f"{bet_amount*2} added to wallet"
+
+    elif result == 'LOSS': 
+        new_wallet_value = player_wallet[0] - bet_amount
+        player_wallet.pop(0)
+        player_wallet.append(new_wallet_value)
+        return f"{bet_amount} subtracted from wallet"
+    else: 
+        return f"{bet_amount} returned to wallet"
 
 
 ## Put it all together
@@ -138,18 +165,20 @@ while len(shuffled_deck) != 0 and player_wallet[0] > 0:
         if dealer_hand.index(card) == 0:
             dealer_points.append(card.get('card_data').get('points'))
             print(f"DEALER HAS: {card.get('card_data').get('card')} of {card.get('card_data').get('suit')}")
-    print(f"DEALER TOTAL: {sum(dealer_points)}")
+    print(f"DEALER TOTAL: {calculate_hand_value(dealer_points)}")
 
     for card in player_hand:
         player_points.append(card.get('card_data').get('points'))
         print(f"{player} HAS: {card.get('card_data').get('card')} of {card.get('card_data').get('suit')}")
-    print(f"PLAYER TOTAL: {sum(player_points)}")
+    print(f"PLAYER TOTAL: {calculate_hand_value(player_points)}")
 
     # ASK PLAYER TO HIT OR STAY
-    stand = False
-    while not stand:
+    player_stand = False
+    player_bust = False
+    while not player_stand and not player_bust:
         if sum(player_points) > 21: 
-            print(f"{player} BUSTS WITH {sum(player_points)} points!")
+            print(f"{player} BUSTS WITH {calculate_hand_value(player_points)} points!")
+            player_bust = True
             break
         hit_stand_input = input('Hit(h) or Stand(s)')
         if hit_stand_input.lower() == "h":
@@ -157,40 +186,33 @@ while len(shuffled_deck) != 0 and player_wallet[0] > 0:
             player_hand.extend(player_card)
             player_points.append(player_card[0].get('card_data').get('points'))
             print(f"{player} received a {player_card[0].get('card_data').get('card')} of {player_card[0].get('card_data').get('suit')}")
-            print(f"{player} total => {sum(player_points)}")
+            print(f"{player} HAS: {calculate_hand_value(player_points)}")
         else:
-            print(f"{player} stands with total {sum(player_points)}")
-            stand = True
+            print(f"{player} stands with total {calculate_hand_value(player_points)}")
+            player_stand = True
 
     # DEALER PLAYS OUT
+    dealer_stand = False
+    dealer_bust = False
     time.sleep(.5)
-    while sum(dealer_points) < 17: 
+    while not dealer_stand and not dealer_bust:
         time.sleep(1)
-        dealer_card, current_deck = deal_card(current_deck,1)
-        print(f"DEALER received a {dealer_card[0].get('card_data').get('card')} of {dealer_card[0].get('card_data').get('suit')}")
-        dealer_points.append(dealer_card[0].get('card_data').get('points'))
-    if sum(dealer_points) > 21: 
-        print(f"DEALER BUSTS with {sum(dealer_points)}")
-    else: 
-        print(f"DEALER HAS {sum(dealer_points)}")
+        if calculate_hand_value(dealer_points) > 21: 
+            print(f"DEALER BUSTS with {calculate_hand_value(dealer_points)}")
+            dealer_bust = True
+        if calculate_hand_value(dealer_points) < 17: 
+            dealer_card, current_deck = deal_card(current_deck,1)
+            print(f"DEALER received a {dealer_card[0].get('card_data').get('card')} of {dealer_card[0].get('card_data').get('suit')}")
+            dealer_points.append(dealer_card[0].get('card_data').get('points'))
+        else: 
+            print(f"DEALER HAS {calculate_hand_value(dealer_points)}")
+            dealer_stand = True
 
 
-    # COMPARE DEALER VALUE TO PLAYER VALUE
-    if sum(dealer_points) > sum(player_points):
-        new_wallet_value = player_wallet[0] - bet_amount
-        player_wallet.pop(0)
-        player_wallet.append(new_wallet_value)
-        print("DEALER WINS :(")
-
-    elif sum(dealer_points) < sum(player_points):
-        new_wallet_value = player_wallet[0] + bet_amount
-        player_wallet.pop(0)
-        player_wallet.append(new_wallet_value)
-        print(f"{player} WINS!")
-    else:
-        print("PUSH")
+    play_result = calculate_winner(dealer_points,player_points)
+    update_wallet_value(play_result, player_wallet)
     print(f"CURRENT WALLET VALUE: {player_wallet[0]}")
+    print("-------------------------------------------")
+    print("-------------------------------------------")
     round +=1
-
 print("GAME OVER")
-
