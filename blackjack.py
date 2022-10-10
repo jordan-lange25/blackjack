@@ -41,8 +41,6 @@ def shuffle_deck(deck):
         shuffled_indexed_deck.append(index_payload)
     return shuffled_indexed_deck
  
-
-# take cards/deal from deck
 def deal_card(deck,number_of_cards):
     """
     Return number_of_cards cards from a given deck
@@ -52,7 +50,6 @@ def deal_card(deck,number_of_cards):
         deck.pop(0)
     return cards, deck
 
-# place a bet
 def place_bet(wallet_value): 
     """
     Ensure the submitted input value is a number and that the player can afford the bet.
@@ -75,7 +72,6 @@ def place_bet(wallet_value):
             print(f"oops! - please submit a number between 1 and {wallet_value}!")
             pass
         
-# handle for Ace
 def calculate_hand_value(hand):
     """
     Given a hand, calculate the point value of the hand.
@@ -89,7 +85,6 @@ def calculate_hand_value(hand):
         hand_value = sum(hand)
     return hand_value
 
-# COMPARE DEALER VALUE TO PLAYER VALUE
 def calculate_winner(dealer_points,player_points,dealer_bust,player_bust):
     """
     Given the point values for the dealer and player hands, determine who won
