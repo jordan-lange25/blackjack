@@ -144,7 +144,6 @@ player_wallet = []
 print("deck assembled! Let's begin.")
 
 
-
 round = 0
 # initialize the game
 if round == 0:
@@ -197,7 +196,8 @@ while len(shuffled_deck) != 0 and player_wallet[0] > 0:
     elif total_player_points != 21 and total_dealer_points == 21: 
         print("DEALER BLACKJACK")
         dealer_blackjack = True
-    
+
+
     ### PLAYER ###
     # ask the player to hit or stand
     player_stand = False
@@ -220,7 +220,6 @@ while len(shuffled_deck) != 0 and player_wallet[0] > 0:
         else:
             print(f"{player} stands with total {calculate_hand_value(player_points)}")
             player_stand = True
-
 
 
     ### DEALER ### 
