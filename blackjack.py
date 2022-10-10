@@ -83,10 +83,10 @@ def calculate_hand_value(hand):
     return hand_value
 
 # COMPARE DEALER VALUE TO PLAYER VALUE
-def calculate_winner(dealer_points,player_points):
+def calculate_winner(dealer_points,player_points,dealer_bust,player_bust):
     dealer_points = calculate_hand_value(dealer_points)
     player_points = calculate_hand_value(player_points)
-    if player_bust or dealer_points > player_points:
+    if (player_bust or dealer_points > player_points) and not dealer_bust:
         print("-------------------------------------------")
         print(f"DEALER WINS :( {dealer_points} - {player_points}")
         print("-------------------------------------------")
@@ -102,11 +102,14 @@ def calculate_winner(dealer_points,player_points):
         print("-------------------------------------------")
         return "PUSH"
         
-def update_wallet_value(result,player_wallet):
+def update_wallet_value(result,player_wallet,player_blackjack):
     # player_wins
     
     if result == 'WIN':
-        new_wallet_value = player_wallet[0] + bet_amount
+        if player_blackjack:
+            new_wallet_value = player_wallet[0] + bet_amount*1.5
+        else:
+            new_wallet_value = player_wallet[0] + bet_amount
         player_wallet.pop(0)
         player_wallet.append(new_wallet_value)
         return f"{bet_amount*2} added to wallet"
@@ -160,22 +163,36 @@ while len(shuffled_deck) != 0 and player_wallet[0] > 0:
     player_hand.extend(player_cards)
 
 
-    # Tell the user what they have
+    # Tell the user the dealer's first card
     for card in dealer_hand:
+        dealer_points.append(card.get('card_data').get('points'))
         if dealer_hand.index(card) == 0:
-            dealer_points.append(card.get('card_data').get('points'))
-            print(f"DEALER HAS: {card.get('card_data').get('card')} of {card.get('card_data').get('suit')}")
-    print(f"DEALER TOTAL: {calculate_hand_value(dealer_points)}")
+            print(f"DEALER HAS: {card.get('card_data').get('card')} of {card.get('card_data').get('suit')}")    
+    total_dealer_points = calculate_hand_value([dealer_points[0]])
+    print(f"DEALER TOTAL: {total_dealer_points}")
 
+    # Tell the player what cards they have
     for card in player_hand:
         player_points.append(card.get('card_data').get('points'))
         print(f"{player} HAS: {card.get('card_data').get('card')} of {card.get('card_data').get('suit')}")
-    print(f"PLAYER TOTAL: {calculate_hand_value(player_points)}")
+    total_player_points = calculate_hand_value(player_points)
+    print(f"PLAYER TOTAL: {total_player_points}")
+
+    # CHECK FOR BLACKJACKS on the first draw
+    player_blackjack = False
+    dealer_blackjack = False
+    if total_player_points == 21 and total_dealer_points != 21: 
+        print(f"{player} BLACKJACK")
+        player_blackjack = True
+    elif total_player_points != 21 and total_dealer_points == 21: 
+        print("DEALER BLACKJACK")
+        dealer_blackjack = True
+    
 
     # ASK PLAYER TO HIT OR STAY
     player_stand = False
     player_bust = False
-    while not player_stand and not player_bust:
+    while not player_stand and not player_bust and not player_blackjack and not dealer_blackjack:
         if sum(player_points) > 21: 
             print(f"{player} BUSTS WITH {calculate_hand_value(player_points)} points!")
             player_bust = True
@@ -191,11 +208,17 @@ while len(shuffled_deck) != 0 and player_wallet[0] > 0:
             print(f"{player} stands with total {calculate_hand_value(player_points)}")
             player_stand = True
 
+
+
     # DEALER PLAYS OUT
+     # Show dealer next card
+    dealer_next_card = dealer_hand[1]
+    print(f"DEALER second card was a {dealer_next_card.get('card_data').get('card')} of {dealer_next_card.get('card_data').get('suit')}")
+    
     dealer_stand = False
     dealer_bust = False
     time.sleep(.5)
-    while not dealer_stand and not dealer_bust:
+    while not dealer_blackjack and not dealer_stand and not dealer_bust and not player_blackjack and not player_bust:
         time.sleep(1)
         if calculate_hand_value(dealer_points) > 21: 
             print(f"DEALER BUSTS with {calculate_hand_value(dealer_points)}")
@@ -203,16 +226,26 @@ while len(shuffled_deck) != 0 and player_wallet[0] > 0:
         if calculate_hand_value(dealer_points) < 17: 
             dealer_card, current_deck = deal_card(current_deck,1)
             print(f"DEALER received a {dealer_card[0].get('card_data').get('card')} of {dealer_card[0].get('card_data').get('suit')}")
+            dealer_hand.extend(dealer_card)
             dealer_points.append(dealer_card[0].get('card_data').get('points'))
         else: 
             print(f"DEALER HAS {calculate_hand_value(dealer_points)}")
             dealer_stand = True
 
 
-    play_result = calculate_winner(dealer_points,player_points)
-    update_wallet_value(play_result, player_wallet)
+    play_result = calculate_winner(dealer_points,player_points,dealer_bust,player_bust)
+    update_wallet_value(play_result, player_wallet,player_blackjack)
     print(f"CURRENT WALLET VALUE: {player_wallet[0]}")
     print("-------------------------------------------")
     print("-------------------------------------------")
+    # print("-----------------TESTING--------------------------")
+    # print(f"player_blackjack: {player_blackjack}")
+    # print(f"player_stand: {player_stand}")
+    # print(f"dealer_blackjack: {dealer_blackjack}")
+    # print(f"dealer_stand: {dealer_stand}")
+    print(f"")
+    
+
+    
     round +=1
 print("GAME OVER")
