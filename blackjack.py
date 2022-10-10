@@ -171,7 +171,6 @@ while len(shuffled_deck) != 0 and player_wallet[0] > 0:
     dealer_hand.extend(dealer_cards)
     player_hand.extend(player_cards)
 
-
     # Tell the user the dealer's first card
     for card in dealer_hand:
         dealer_points.append(card.get('card_data').get('points'))
